@@ -22,12 +22,18 @@ export default async function Home() {
   const organicImg = organic.find((p) => p.images?.[0])?.images?.[0];
 
   const liveSlugs = new Set(cats.map((c) => c.slug));
-  const has = (names: string[]) => organic.filter((p) => names.some((n) => p.nameEn.includes(n)));
-  const honey = has(["Honey"]);
-  const gur = has(["Gur"]);
-  const spices = has(["Turmeric", "Chili", "Cumin", "Coriander", "Black Seed"]);
-  const grains = has(["Rice", "Lentil", "Chickpeas", "Puffed", "Flattened"]);
-  const nuts = has(["Peanut", "Almond", "Cashew", "Raisin"]);
+  const has = (names: string[]) => {
+    const lower = names.map((n) => n.toLowerCase());
+    return organic.filter((p) => lower.some((n) => p.nameEn.toLowerCase().includes(n)));
+  };
+  // Never render an empty rail: fall back to the full list so demo/offline mode still shows products.
+  const orAll = (list: typeof organic, start = 0, n = 10) =>
+    list.length ? list.slice(0, n) : organic.slice(start, start + n);
+  const honey = orAll(has(["Honey"]), 0);
+  const gur = orAll(has(["Gur", "Jaggery"]), 2);
+  const spices = orAll(has(["Turmeric", "Chili", "Cumin", "Coriander", "Black Seed"]), 4);
+  const grains = orAll(has(["Rice", "Lentil", "Chickpeas", "Puffed", "Flattened"]), 6);
+  const nuts = orAll(has(["Peanut", "Almond", "Cashew", "Raisin", "Dry Fruit"]), 8);
   const featured = [
     ...cats.map((c) => ({
       name: c.name,

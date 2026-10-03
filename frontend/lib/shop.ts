@@ -62,16 +62,49 @@ export const DEMO_PRODUCTS: Product[] = [
   { id: "p6", slug: "mixed-dry-fruits-500g", nameEn: "Mixed Dry Fruits", nameBn: "মিক্সড ড্রাই ফ্রুটস", badges: ["New Arrival"], categorySlug: "dry-foods", variants: demoVariants("DRY-MIX", 45000) },
   { id: "p7", slug: "black-seed-honey-500g", nameEn: "Black Seed Honey", nameBn: "কালোজিরা মধু", badges: ["Offer"], categorySlug: "honey", variants: demoVariants("HNY-BLK", 62000) },
   { id: "p8", slug: "ghee-500g", nameEn: "Pure Cow Ghee", nameBn: "খাঁটি গাওয়া ঘি", badges: ["Best Selling"], categorySlug: "oils", variants: demoVariants("GHE-COW", 68000) },
+  { id: "p9", slug: "chili-powder-500g", nameEn: "Chili Powder", nameBn: "মরিচ গুঁড়া", badges: ["Best Selling"], categorySlug: "spices", variants: demoVariants("SPC-CHI", 22000) },
+  { id: "p10", slug: "cumin-powder-500g", nameEn: "Cumin Powder", nameBn: "জিরা গুঁড়া", badges: ["New Arrival"], categorySlug: "spices", variants: demoVariants("SPC-CUM", 26000) },
+  { id: "p11", slug: "chinigura-rice-1kg", nameEn: "Chinigura Rice", nameBn: "চিনিগুঁড়া চাল", badges: ["Best Selling"], categorySlug: "dry-foods", variants: demoVariants("RIC-CHI", 14000) },
+  { id: "p12", slug: "masoor-lentil-1kg", nameEn: "Masoor Lentil", nameBn: "মসুর ডাল", badges: ["Offer"], categorySlug: "dry-foods", variants: demoVariants("LEN-MAS", 13000) },
+  { id: "p13", slug: "almonds-500g", nameEn: "Almonds", nameBn: "কাঠবাদাম", badges: ["Premium"], categorySlug: "dry-foods", variants: demoVariants("DRY-ALM", 85000) },
+  { id: "p14", slug: "raisins-500g", nameEn: "Raisins", nameBn: "কিশমিশ", badges: ["New Arrival"], categorySlug: "dry-foods", variants: demoVariants("DRY-RAI", 45000) },
 ];
 
 export async function getCategories(): Promise<Category[]> {
   const live = await api<Category[]>("/categories");
   return live?.length ? live : DEMO_CATEGORIES;
 }
+
+// Live products all sit under the "organic" category — derive the shopper-facing
+// category from the product name (same vocabulary as the homepage rails) so
+// collection pages and multi-category filtering work on live data too.
+const CATEGORY_KEYWORDS: [string, string[]][] = [
+  ["sundarban-honey", ["sundarban"]],
+  ["honey", ["honey"]],
+  ["dates-gur", ["gur", "jaggery"]],
+  ["oils", ["oil", "ghee"]],
+  ["spices", ["turmeric", "chili", "cumin", "coriander", "spice", "masala", "black seed"]],
+  ["dry-foods", ["rice", "lentil", "chickpea", "peanut", "almond", "cashew", "raisin", "dry fruit", "puffed", "flattened", "nut"]],
+];
+
+export function deriveCategory(nameEn: string): string | null {
+  const n = nameEn.toLowerCase();
+  for (const [slug, kws] of CATEGORY_KEYWORDS) {
+    if (kws.some((k) => n.includes(k))) return slug;
+  }
+  return null;
+}
+
+const withCategory = (p: Product): Product =>
+  p.categorySlug ? p : { ...p, categorySlug: deriveCategory(p.nameEn) ?? "organic" };
+
 export async function getCollection(slug: string): Promise<Product[]> {
   const live = await api<Product[]>(`/collections/${slug}`);
-  if (live?.length) return live;
-  return DEMO_PRODUCTS.filter((p) => p.categorySlug === slug || slug === "all");
+  if (live?.length) return live.map(withCategory);
+  // "organic" is the backend seed catalog (= everything); "all" is everything.
+  if (slug === "all" || slug === "organic") return DEMO_PRODUCTS;
+  const filtered = DEMO_PRODUCTS.filter((p) => p.categorySlug === slug);
+  return filtered.length ? filtered : DEMO_PRODUCTS;
 }
 export async function getProduct(slug: string): Promise<Product | null> {
   const live = await api<Product>(`/products/${slug}`);

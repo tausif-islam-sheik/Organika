@@ -7,6 +7,10 @@ import { getCategories } from "../lib/shop";
 export const metadata: Metadata = {
   title: "Organika | Organic Grocery BD",
   description: "Pure honey, gur, oils & spices delivered across Bangladesh. COD available.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

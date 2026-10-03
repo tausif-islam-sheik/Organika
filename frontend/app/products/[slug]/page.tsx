@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getCollection, getProduct } from "../../../lib/shop";
-import { Badge, GBCard, SlideRow, imgUrl } from "../../../components/home";
+import { Badge, DiscountBadge, GBCard, SlideRow, imgUrl } from "../../../components/home";
+import { ProductDetailSkeleton } from "../../../components/skeletons";
 import { useCart } from "../../../components/cart";
 import { formatBDT } from "../../../lib/shop";
 import type { Product } from "../../../lib/shop";
@@ -39,16 +40,17 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     });
   }, [params]);
 
-  if (!p) return <main className="mx-auto max-w-[1440px] px-4 py-10 text-sm">Loading…</main>;
+  if (!p) return <ProductDetailSkeleton />;
   const v = p.variants[vi] ?? p.variants[0];
   const off = v?.comparePrice ? Math.round((1 - v.price / v.comparePrice) * 100) : 0;
   const gallery = p.images?.length ? p.images : [null];
 
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-4">
+      <section className="flex min-h-[calc(100svh-220px)] flex-col justify-center">
       <div className="text-xs text-gray-500"><Link href="/">Home</Link> / <Link href="/collections/all">Products</Link> / {p.nameEn}</div>
 
-      <div className="mt-3 grid gap-6 md:grid-cols-2">
+      <div className="mt-3 grid items-center gap-6 md:grid-cols-2">
         <div className="flex gap-3">
           <div className="flex w-16 shrink-0 flex-col gap-2 sm:w-20">
             {gallery.map((g, k) => (
@@ -61,34 +63,36 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               </button>
             ))}
           </div>
-          <div className="min-w-0 flex-1 self-start overflow-hidden rounded-2xl border bg-white">
+          <div className="min-w-0 flex-1 self-stretch overflow-hidden rounded-2xl border bg-white">
             {imgUrl(gallery[img]) ? (
-              <img src={imgUrl(gallery[img])!} alt={p.nameEn} className="h-full max-h-[440px] min-h-80 w-full object-cover" />
+              <img src={imgUrl(gallery[img])!} alt={p.nameEn} className="h-full max-h-[calc(100svh-260px)] min-h-80 w-full object-cover" />
             ) : (
-              <div className="flex h-full max-h-[440px] min-h-80 items-center justify-center bg-brand-50 text-7xl font-extrabold text-brand-600">{p.nameEn.charAt(0)}</div>
+              <div className="flex h-full max-h-[calc(100svh-260px)] min-h-80 items-center justify-center bg-brand-50 text-7xl font-extrabold text-brand-600">{p.nameEn.charAt(0)}</div>
             )}
           </div>
         </div>
 
-        <div>
+        <div className="flex flex-col justify-center gap-5 py-4">
           <div className="flex flex-wrap items-center gap-1.5">
             {p.badges.map((b) => <Badge key={b} label={b} />)}
-            {off > 0 && <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">Save {off}%</span>}
+            {off > 0 && <DiscountBadge text={`Save ${off}%`} />}
           </div>
-          <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">{p.nameEn}</h1>
-          {p.nameBn && <div className="mt-0.5 text-gray-600">{p.nameBn}</div>}
-          <div className="mt-1 text-sm text-gray-500">★★★★★ <span className="font-semibold text-gray-700">5.0</span> · Brand: Organika</div>
+          <div>
+            <h1 className="text-2xl font-extrabold sm:text-3xl">{p.nameEn}</h1>
+            {p.nameBn && <div className="mt-1 text-gray-600">{p.nameBn}</div>}
+            <div className="mt-2 text-sm text-gray-500">★★★★★ <span className="font-semibold text-gray-700">5.0</span> · Brand: Organika</div>
+          </div>
 
-          <div className="mt-3 flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-brand-700">{v && formatBDT(v.price)}</span>
             {v?.comparePrice && <span className="text-base text-gray-400 line-through">{formatBDT(v.comparePrice)}</span>}
           </div>
-          <p className="mt-2 text-sm text-gray-600">{p.description ?? "Pure organic product from trusted Bangladeshi farms."}</p>
+          <p className="text-sm leading-relaxed text-gray-600">{p.description ?? "Pure organic product from trusted Bangladeshi farms."}</p>
 
           {p.variants.length > 1 && (
-            <div className="mt-3">
+            <div>
               <div className="text-sm font-semibold">Size</div>
-              <div className="mt-1 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {p.variants.map((vv, k) => (
                   <button key={vv.id} onClick={() => setVi(k)} className={`rounded-full border px-4 py-1.5 text-sm ${k === vi ? "border-brand-600 bg-brand-50 font-semibold" : ""}`}>
                     {vv.label}
@@ -98,7 +102,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Quantity:</span>
             <div className="flex items-center rounded-full border">
               <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-1.5 text-lg">-</button>
@@ -108,16 +112,17 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             <span className="text-xs text-gray-500">{v?.stock} in stock</span>
           </div>
 
-          <div className="mt-3 flex gap-2">
+          <div className="flex gap-2 text-sm sm:text-base">
             {v && <button onClick={() => add(p, v, qty)} className="flex-1 rounded-full bg-brand-600 py-3 font-semibold text-white">Add to Cart</button>}
             {v && <Link href={`/checkout?buy=${v.id}&qty=${qty}`} className="flex-1 rounded-full border-2 border-brand-600 py-3 text-center font-semibold text-brand-700">Buy Now</Link>}
           </div>
-          <div className="mt-2 flex gap-2">
+          <div className="flex gap-2 text-sm sm:text-base">
             <a href="https://wa.me/8801XXXXXXXXX" className="flex-1 rounded-full border border-green-500 py-3 text-center font-semibold text-green-700">Order on WhatsApp</a>
             <a href="tel:09611000000" className="flex-1 rounded-full border border-gray-300 py-3 text-center font-semibold">Call for order</a>
           </div>
         </div>
       </div>
+      </section>
 
       <div className="mt-8 rounded-xl border bg-white p-2">
         <div className="flex gap-2">

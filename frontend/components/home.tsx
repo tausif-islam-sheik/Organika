@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, Sparkles, Crown, Tag, Zap, type LucideIcon } from "lucide-react";
 import { formatBDT, type Product } from "../lib/shop";
 import { useCart } from "./cart";
 
@@ -26,9 +26,43 @@ export function Thumb({ name, i = 0, big = false, tall = false, src }: { name: s
   );
 }
 
+const BADGE_STYLE: Record<string, { cls: string; Icon: LucideIcon }> = {
+  "Best Selling": { cls: "bg-[#f04e23] text-white", Icon: Flame },
+  "New Arrival": { cls: "bg-blue-600 text-white", Icon: Sparkles },
+  Offer: { cls: "bg-orange-500 text-white", Icon: Tag },
+  Premium: { cls: "bg-stone-900 text-white", Icon: Crown },
+};
+
 export function Badge({ label }: { label: string }) {
-  const color = label === "Offer" ? "bg-red-500" : label === "New Arrival" ? "bg-blue-500" : "bg-brand-600";
-  return <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold text-white ${color}`}>{label}</span>;
+  const s = BADGE_STYLE[label] ?? BADGE_STYLE["Best Selling"];
+  const Icon = s.Icon;
+  return (
+    <span
+      className={`relative inline-flex items-center gap-1.5 rounded-l-full py-1 pl-3 pr-2 text-xs font-semibold drop-shadow-md ${s.cls}`}
+    >
+      <Icon className="size-3.5" strokeWidth={2.5} />
+      {label}
+      <span
+        aria-hidden
+        className="absolute -right-[10px] top-0 h-full w-[11px] bg-inherit"
+        style={{ clipPath: "polygon(0 0, 100% 50%, 0 100%)" }}
+      />
+    </span>
+  );
+}
+
+export function DiscountBadge({ text }: { text: string }) {
+  return (
+    <span className="relative inline-flex items-center gap-1.5 rounded-l-full bg-red-600 py-1 pl-3 pr-2 text-xs font-semibold text-white drop-shadow-md">
+      <Zap className="size-3.5" strokeWidth={2.5} />
+      {text}
+      <span
+        aria-hidden
+        className="absolute -right-[10px] top-0 h-full w-[11px] bg-inherit"
+        style={{ clipPath: "polygon(0 0, 100% 50%, 0 100%)" }}
+      />
+    </span>
+  );
 }
 
 export function ProductCard({ p, i = 0 }: { p: Product; i?: number }) {
@@ -38,12 +72,12 @@ export function ProductCard({ p, i = 0 }: { p: Product; i?: number }) {
   if (!v) return null;
   const off = v.comparePrice ? Math.round((1 - v.price / v.comparePrice) * 100) : 0;
   return (
-    <div className="w-44 shrink-0 snap-start overflow-hidden rounded-xl border bg-white sm:w-56">
+    <div className="w-full min-w-0 snap-start overflow-hidden rounded-xl border bg-white">
       <Link href={`/products/${p.slug}`}>
         <div className="relative">
           <Thumb name={p.nameEn} i={i} src={p.images?.[0]} />
-          <div className="absolute left-2 top-2 flex gap-1">{p.badges.map((b) => <Badge key={b} label={b} />)}</div>
-          {off > 0 && <span className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">-{off}%</span>}
+          <div className="absolute left-2 top-2 flex max-w-[62%] gap-1">{p.badges.map((b) => <Badge key={b} label={b} />)}</div>
+          {off > 0 && <span className="absolute bottom-2 right-2"><DiscountBadge text={`-${off}%`} /></span>}
         </div>
       </Link>
       <div className="p-3">
@@ -73,7 +107,11 @@ export function ProductRow({ title, items, href }: { title: string; items: Produ
     <section className="mx-auto mt-8 max-w-[1440px] px-4">
       <SectionHead title={title} href={href} />
       <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1">
-        {items.map((p, i) => <ProductCard key={p.id} p={p} i={i} />)}
+        {items.map((p, i) => (
+          <div key={p.id} className="w-44 shrink-0 snap-start sm:w-56">
+            <ProductCard p={p} i={i} />
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -124,8 +162,8 @@ export function GBCard({ p }: { p: Product }) {
       <Link href={`/products/${p.slug}`}>
         <div className="relative">
           <Thumb name={p.nameEn} src={p.images?.[0]} tall />
-          <div className="absolute left-2 top-2 flex gap-1">{p.badges.slice(0, 1).map((b) => <Badge key={b} label={b} />)}</div>
-          {off > 0 && <span className="absolute right-2 top-2 rounded bg-red-500 px-1.5 py-0.5 text-[11px] font-bold text-white">{off}% Off</span>}
+          <div className="absolute left-2 top-2 flex max-w-[62%] gap-1">{p.badges.slice(0, 1).map((b) => <Badge key={b} label={b} />)}</div>
+          {off > 0 && <span className="absolute bottom-2 right-2"><DiscountBadge text={`${off}% Off`} /></span>}
         </div>
       </Link>
       <div className="p-3">

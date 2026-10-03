@@ -20,7 +20,17 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
       .then((u) => (STAFF.includes(u.role) ? setMe(u) : Promise.reject(new Error("role"))))
       .catch(() => router.replace("/admin/login"));
   }, [router]);
-  if (!me) return <main className="p-10 text-sm">Checking session… redirecting to staff login…</main>;
+  if (!me)
+    return (
+      <main className="mx-auto max-w-6xl animate-pulse p-4 md:p-6">
+        <div className="h-8 w-48 rounded-md bg-primary/10" />
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-24 rounded-md bg-primary/10" />
+          ))}
+        </div>
+      </main>
+    );
   return <>{children}</>;
 }
 

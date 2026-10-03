@@ -7,11 +7,11 @@ export function StoreChrome({ cats, children }: { cats: { name: string; slug: st
   const path = usePathname();
   if (path.startsWith("/admin")) return <>{children}</>;
   return (
-    <div className="pb-14 md:pb-0">
+    <div className="flex min-h-screen flex-col pb-16 md:pb-0">
       <ScrollTop />
       <Header cats={cats} />
-      {children}
-      <Footer />
+      <div className="flex-1">{children}</div>
+      <Footer cats={cats} />
       <FloatingButtons />
       <MobileNav />
       <CartDrawer />

@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { formatBDT, type Category, type Product } from "../lib/shop";
@@ -13,20 +12,48 @@ export function CollectionView({ products, cats, slug, title }: { products: Prod
   const prices = products.map((p) => p.variants[0]?.price ?? 0);
   const maxPrice = Math.max(...prices, 0);
   const [max, setMax] = useState(maxPrice);
+  // Keep the price slider in sync when navigating between collections
+  // (otherwise a stale max from the previous collection can filter out everything).
+  useEffect(() => {
+    setMax(maxPrice);
+  }, [maxPrice, slug]);
   const [badges, setBadges] = useState<string[]>([]);
   const [inStock, setInStock] = useState(false);
   const [sort, setSort] = useState<Sort>("featured");
   const [page, setPage] = useState(1);
   const PER = 20;
 
+  // Multi-select categories — defaults to the current collection (or everything).
+  const defaultSel = slug === "all" || !cats.some((c) => c.slug === slug) ? ["all"] : [slug];
+  const [selCats, setSelCats] = useState<string[]>(defaultSel);
+  useEffect(() => {
+    setSelCats(slug === "all" || !cats.some((c) => c.slug === slug) ? ["all"] : [slug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  const toggleCat = (s: string) =>
+    setSelCats((prev) => {
+      if (s === "all") return prev.includes("all") ? [] : ["all"];
+      const next = prev.filter((x) => x !== "all");
+      return next.includes(s) ? next.filter((x) => x !== s) : [...next, s];
+    });
+
+  const countFor = (s: string) =>
+    s === "all" ? products.length : products.filter((p) => (p.categorySlug ?? "organic") === s).length;
+
   const toggleBadge = (b: string) =>
     setBadges((bs) => (bs.includes(b) ? bs.filter((x) => x !== b) : [...bs, b]));
+
+  const catActive = !(
+    selCats.length === defaultSel.length && selCats.every((s) => defaultSel.includes(s))
+  );
 
   const items = useMemo(() => {
     let list = products.filter((p) => {
       const v = p.variants[0];
       if (!v) return false;
-      if (v.price > max) return false;
+      if (!selCats.includes("all") && !selCats.includes(p.categorySlug ?? "organic")) return false;
+      if (maxPrice > 0 && v.price > max) return false;
       if (badges.length && !badges.some((b) => p.badges?.includes(b))) return false;
       if (inStock && v.stock <= 0) return false;
       return true;
@@ -42,11 +69,11 @@ export function CollectionView({ products, cats, slug, title }: { products: Prod
         return off(b) - off(a);
       });
     return list;
-  }, [products, max, badges, inStock, sort]);
+  }, [products, max, badges, inStock, sort, selCats]);
 
   useEffect(() => {
     setPage(1);
-  }, [max, badges, inStock, sort, slug]);
+  }, [max, badges, inStock, sort, slug, selCats]);
 
   const totalPages = Math.max(1, Math.ceil(items.length / PER));
   const safePage = Math.min(page, totalPages);
@@ -57,10 +84,21 @@ export function CollectionView({ products, cats, slug, title }: { products: Prod
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-xl font-extrabold">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
-          <details className="md:hidden">
+          <details className="relative md:hidden">
             <summary className="cursor-pointer rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Filters</summary>
-            <div className="absolute z-10 mt-2 w-64 rounded-xl border bg-white p-4 shadow-lg">
-              <h3 className="font-bold">Max price</h3>
+            <div className="absolute right-0 z-10 mt-2 max-h-[70vh] w-64 overflow-y-auto rounded-xl border bg-white p-4 shadow-lg">
+              <h3 className="font-bold">Categories</h3>
+              <label className="mt-1 flex cursor-pointer items-center gap-2 text-sm">
+                <input type="checkbox" checked={selCats.includes("all")} onChange={() => toggleCat("all")} className="accent-brand-600" />
+                All Products ({countFor("all")})
+              </label>
+              {cats.map((c) => (
+                <label key={c.slug} className="mt-1 flex cursor-pointer items-center gap-2 text-sm">
+                  <input type="checkbox" checked={selCats.includes(c.slug)} onChange={() => toggleCat(c.slug)} className="accent-brand-600" />
+                  {c.name} ({countFor(c.slug)})
+                </label>
+              ))}
+              <h3 className="mt-4 font-bold">Max price</h3>
               <input
                 type="range" min={0} max={maxPrice} step={1000} value={max}
                 onChange={(e) => setMax(Number(e.target.value))}
@@ -98,17 +136,21 @@ export function CollectionView({ products, cats, slug, title }: { products: Prod
         <aside className="hidden w-60 shrink-0 md:block">
           <div className="sticky top-32 rounded-xl border bg-white p-4">
             <h3 className="font-bold">Categories</h3>
-            <ul className="mt-2 space-y-1 text-sm">
+            <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto text-sm">
               <li>
-                <Link href="/collections/all" className={slug === "all" ? "font-bold text-brand-700" : "hover:text-brand-600"}>
-                  All Products
-                </Link>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input type="checkbox" checked={selCats.includes("all")} onChange={() => toggleCat("all")} className="accent-brand-600" />
+                  <span className={selCats.includes("all") ? "font-bold text-brand-700" : ""}>All Products</span>
+                  <span className="ml-auto text-xs text-gray-400">{countFor("all")}</span>
+                </label>
               </li>
               {cats.map((c) => (
                 <li key={c.slug}>
-                  <Link href={`/collections/${c.slug}`} className={slug === c.slug ? "font-bold text-brand-700" : "hover:text-brand-600"}>
-                    {c.name}
-                  </Link>
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" checked={selCats.includes(c.slug)} onChange={() => toggleCat(c.slug)} className="accent-brand-600" />
+                    <span className={selCats.includes(c.slug) ? "font-bold text-brand-700" : ""}>{c.name}</span>
+                    <span className="ml-auto text-xs text-gray-400">{countFor(c.slug)}</span>
+                  </label>
                 </li>
               ))}
             </ul>
@@ -134,8 +176,8 @@ export function CollectionView({ products, cats, slug, title }: { products: Prod
               In stock only
             </label>
 
-            {(badges.length > 0 || max < maxPrice || inStock) && (
-              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => { setBadges([]); setMax(maxPrice); setInStock(false); }}>
+            {(badges.length > 0 || max < maxPrice || inStock || catActive) && (
+              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => { setBadges([]); setMax(maxPrice); setInStock(false); setSelCats(defaultSel); }}>
                 Clear filters
               </Button>
             )}
