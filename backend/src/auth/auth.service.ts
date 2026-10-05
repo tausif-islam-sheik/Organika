@@ -92,4 +92,53 @@ export class AuthService {
     }
     return { ok: true };
   }
+
+  async forgotPassword(email: string) {
+    const normalized = email.toLowerCase().trim();
+    const user = await this.prisma.user.findUnique({ where: { email: normalized } });
+    // Always return ok to prevent email enumeration. Only create a token for existing users.
+    if (!user) return { ok: true };
+    // Revoke previous unused tokens for this user
+    await this.prisma.passwordReset.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    const token = randomBytes(32).toString("hex");
+    await this.prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        tokenHash: hash(token),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      },
+    });
+    // No mailer configured yet — return the token in non-production so the UI can complete the flow.
+    // In production, send the reset link by email instead and do NOT expose the token.
+    if (process.env.NODE_ENV === "production") return { ok: true };
+    return { ok: true, resetToken: token };
+  }
+
+  async resetPassword(token: string, password: string) {
+    if (!password || password.length < 8)
+      throw new BadRequestException("Password min 8 chars");
+    const rec = await this.prisma.passwordReset.findUnique({
+      where: { tokenHash: hash(token) },
+      include: { user: true },
+    });
+    if (!rec || rec.usedAt || rec.expiresAt < new Date())
+      throw new BadRequestException("Invalid or expired reset link");
+    await this.prisma.user.update({
+      where: { id: rec.userId },
+      data: { passwordHash: await argon2.hash(password) },
+    });
+    await this.prisma.passwordReset.update({
+      where: { id: rec.id },
+      data: { usedAt: new Date() },
+    });
+    // Log out all sessions after a password change
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: rec.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return { ok: true };
+  }
 }

@@ -7,6 +7,13 @@ import { ProductDetailSkeleton } from "../../../components/skeletons";
 import { useCart } from "../../../components/cart";
 import { formatBDT } from "../../../lib/shop";
 import type { Product } from "../../../lib/shop";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { add } = useCart();
@@ -17,6 +24,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [img, setImg] = useState(0);
   const [tab, setTab] = useState<"desc" | "rev">("desc");
   const [revMsg, setRevMsg] = useState("");
+  const [rating, setRating] = useState("5");
   const [photos, setPhotos] = useState<string[]>([]);
 
   const addPhotos = (files: File[]) => {
@@ -182,13 +190,18 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <form className="rounded-xl border bg-white p-4" onSubmit={(e) => { e.preventDefault(); setPhotos([]); setRevMsg("Thanks! Your review was submitted."); }}>
             <h3 className="font-bold">Submit Your Review</h3>
             <input required placeholder="Your name" className="mt-2 w-full rounded border px-3 py-2 text-sm" />
-            <select className="mt-2 w-full rounded border px-3 py-2 text-sm" defaultValue="5">
-              <option value="5">Perfect (5)</option>
-              <option value="4">Good (4)</option>
-              <option value="3">Average (3)</option>
-              <option value="2">Not that bad (2)</option>
-              <option value="1">Very poor (1)</option>
-            </select>
+            <Select value={rating} onValueChange={setRating}>
+              <SelectTrigger className="mt-2 w-full rounded border bg-white px-3 py-2 text-sm shadow-none">
+                <SelectValue placeholder="Select rating" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">Perfect (5)</SelectItem>
+                <SelectItem value="4">Good (4)</SelectItem>
+                <SelectItem value="3">Average (3)</SelectItem>
+                <SelectItem value="2">Not that bad (2)</SelectItem>
+                <SelectItem value="1">Very poor (1)</SelectItem>
+              </SelectContent>
+            </Select>
             <textarea required placeholder="Write your opinion about the product" className="mt-2 w-full rounded border px-3 py-2 text-sm" rows={3} />
             <div
               onDragOver={(e) => e.preventDefault()}

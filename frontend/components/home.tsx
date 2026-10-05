@@ -225,31 +225,47 @@ export function Hero() {
   }, []);
   return (
     <section className="mx-auto mt-4 max-w-[1440px] px-4">
-      <div className="group relative overflow-hidden rounded-2xl">
-        <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${i * 100}%)` }}>
-          {SLIDES.map((s, k) => (
-            <div key={k} className={`w-full shrink-0 bg-gradient-to-r ${s.c}`}>
-              <div className="flex min-h-[280px] items-center justify-between p-6 text-white sm:min-h-[380px] sm:p-12">
-                <div>
-                  <h1 className="text-2xl font-extrabold sm:text-4xl">{s.t}</h1>
-                  <p className="mt-2 text-sm opacity-90 sm:text-base">{s.s}</p>
-                  <Link href="/collections/all" className="mt-4 inline-block rounded-full bg-white px-6 py-2 text-sm font-bold text-gray-900">Shop Now</Link>
+      <div className="flex flex-col gap-3 lg:h-[380px] lg:flex-row">
+        {/* Left — slider (70%) */}
+        <div className="group relative w-full overflow-hidden rounded-2xl lg:w-[70%]">
+          <div className="flex h-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${i * 100}%)` }}>
+            {SLIDES.map((s, k) => (
+              <div key={k} className={`w-full shrink-0 bg-gradient-to-r ${s.c}`}>
+                <div className="flex h-full min-h-[280px] items-center justify-between p-6 text-white sm:min-h-[380px] sm:p-12 lg:min-h-0">
+                  <div>
+                    <h1 className="text-2xl font-extrabold sm:text-4xl">{s.t}</h1>
+                    <p className="mt-2 text-sm opacity-90 sm:text-base">{s.s}</p>
+                    <Link href="/collections/all" className="mt-4 inline-block rounded-full bg-white px-6 py-2 text-sm font-bold text-gray-900">Shop Now</Link>
+                  </div>
+                  <div className="hidden text-8xl opacity-30 sm:block">❋</div>
                 </div>
-                <div className="hidden text-8xl opacity-30 sm:block">❋</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <button onClick={() => go(-1)} aria-label="Previous banner" className="absolute left-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity group-hover:opacity-100 sm:flex">
+            <ChevronLeft className="size-5" />
+          </button>
+          <button onClick={() => go(1)} aria-label="Next banner" className="absolute right-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity group-hover:opacity-100 sm:flex">
+            <ChevronRight className="size-5" />
+          </button>
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+            {SLIDES.map((_, k) => (
+              <button key={k} onClick={() => setI(k)} aria-label={`Go to banner ${k + 1}`} className={`h-2 rounded-full transition-all ${k === i ? "w-6 bg-white" : "w-2 bg-white/60"}`} />
+            ))}
+          </div>
         </div>
-        <button onClick={() => go(-1)} aria-label="Previous banner" className="absolute left-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity group-hover:opacity-100 sm:flex">
-          <ChevronLeft className="size-5" />
-        </button>
-        <button onClick={() => go(1)} aria-label="Next banner" className="absolute right-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity group-hover:opacity-100 sm:flex">
-          <ChevronRight className="size-5" />
-        </button>
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {SLIDES.map((_, k) => (
-            <button key={k} onClick={() => setI(k)} aria-label={`Go to banner ${k + 1}`} className={`h-2 rounded-full transition-all ${k === i ? "w-6 bg-white" : "w-2 bg-white/60"}`} />
-          ))}
+        {/* Right — 2 stacked promos (30%), top & bottom */}
+        <div className="flex w-full flex-col gap-3 lg:w-[30%]">
+          <Link href="/collections/all" className="flex min-h-[140px] flex-1 flex-col justify-center rounded-2xl bg-gradient-to-r from-amber-600 to-yellow-500 p-5 text-white sm:min-h-[160px] lg:min-h-0">
+            <div className="text-xs font-semibold uppercase tracking-wide opacity-90">Offer Zone · Limited time</div>
+            <div className="mt-1 text-lg font-extrabold leading-snug">Winter Gur Festival — up to 20% off</div>
+            <span className="mt-2 w-fit rounded-full bg-white px-4 py-1.5 text-xs font-bold text-gray-900">Grab the offer</span>
+          </Link>
+          <Link href="/collections/organic" className="flex min-h-[140px] flex-1 flex-col justify-center rounded-2xl bg-gradient-to-r from-emerald-700 to-green-500 p-5 text-white sm:min-h-[160px] lg:min-h-0">
+            <div className="text-xs font-semibold uppercase tracking-wide opacity-90">Organic Certified</div>
+            <div className="mt-1 text-lg font-extrabold leading-snug">100% Natural · Lab Tested · Farm Direct</div>
+            <span className="mt-2 w-fit rounded-full bg-white px-4 py-1.5 text-xs font-bold text-gray-900">Shop organic</span>
+          </Link>
         </div>
       </div>
     </section>

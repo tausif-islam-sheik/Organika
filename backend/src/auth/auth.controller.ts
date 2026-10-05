@@ -72,6 +72,18 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Public()
+  @Post("forgot-password")
+  async forgotPassword(@Body() b: { email: string }) {
+    return this.auth.forgotPassword(b.email ?? "");
+  }
+
+  @Public()
+  @Post("reset-password")
+  async resetPassword(@Body() b: { token: string; password: string }) {
+    return this.auth.resetPassword(b.token ?? "", b.password ?? "");
+  }
+
   @Post("logout")
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     await this.auth.logout(req.cookies?.refresh_token);
