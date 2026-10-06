@@ -38,7 +38,7 @@ export function Badge({ label }: { label: string }) {
   const Icon = s.Icon;
   return (
     <span
-      className={`relative inline-flex items-center gap-1.5 rounded-l-full py-1 pl-3 pr-2 text-xs font-semibold drop-shadow-md ${s.cls}`}
+      className={`relative mr-[10px] inline-flex shrink-0 items-center gap-1.5 rounded-l-full py-1 pl-3 pr-2 text-xs font-semibold drop-shadow-md last:mr-0 ${s.cls}`}
     >
       <Icon className="size-3.5" strokeWidth={2.5} />
       {label}
@@ -53,7 +53,7 @@ export function Badge({ label }: { label: string }) {
 
 export function DiscountBadge({ text }: { text: string }) {
   return (
-    <span className="relative inline-flex items-center gap-1.5 rounded-l-full bg-red-600 py-1 pl-3 pr-2 text-xs font-semibold text-white drop-shadow-md">
+    <span className="relative mr-[10px] inline-flex shrink-0 items-center gap-1.5 rounded-l-full bg-red-600 py-1 pl-3 pr-2 text-xs font-semibold text-white drop-shadow-md last:mr-0">
       <Zap className="size-3.5" strokeWidth={2.5} />
       {text}
       <span
@@ -76,7 +76,7 @@ export function ProductCard({ p, i = 0 }: { p: Product; i?: number }) {
       <Link href={`/products/${p.slug}`}>
         <div className="relative">
           <Thumb name={p.nameEn} i={i} src={p.images?.[0]} />
-          <div className="absolute left-2 top-2 flex max-w-[62%] gap-1">{p.badges.map((b) => <Badge key={b} label={b} />)}</div>
+          <div className="absolute left-2 top-2 flex max-w-[75%] flex-wrap gap-x-1 gap-y-2">{p.badges.map((b) => <Badge key={b} label={b} />)}</div>
           {off > 0 && <span className="absolute bottom-2 right-2"><DiscountBadge text={`-${off}%`} /></span>}
         </div>
       </Link>
@@ -162,7 +162,7 @@ export function GBCard({ p }: { p: Product }) {
       <Link href={`/products/${p.slug}`}>
         <div className="relative">
           <Thumb name={p.nameEn} src={p.images?.[0]} tall />
-          <div className="absolute left-2 top-2 flex max-w-[62%] gap-1">{p.badges.slice(0, 1).map((b) => <Badge key={b} label={b} />)}</div>
+          <div className="absolute left-2 top-2 flex max-w-[75%] flex-wrap gap-x-1 gap-y-2">{p.badges.slice(0, 1).map((b) => <Badge key={b} label={b} />)}</div>
           {off > 0 && <span className="absolute bottom-2 right-2"><DiscountBadge text={`${off}% Off`} /></span>}
         </div>
       </Link>
@@ -210,13 +210,12 @@ export function SlideRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-const SLIDES = [
-  { t: "100% Pure Sundarban Honey", s: "Raw, unprocessed, lab-tested. Free delivery over ৳2,000.", c: "from-brand-700 to-brand-500" },
-  { t: "Khejur Gur Season is Here", s: "Fresh date jaggery from Jessore. Limited stock.", c: "from-amber-600 to-yellow-500" },
-  { t: "Cold-Pressed Oils", s: "Ghani-bhanga mustard oil, traditional taste.", c: "from-emerald-700 to-green-500" },
-];
-
-export function Hero() {
+export function Hero({ slides }: { slides?: { title: string; subtitle: string; cta: string; href: string; gradient: string }[] }) {
+  const SLIDES = slides?.length ? slides.map((s) => ({ t: s.title, s: s.subtitle, cta: s.cta, href: s.href, c: s.gradient })) : [
+    { t: "100% Pure Sundarban Honey", s: "Raw, unprocessed, lab-tested. Free delivery over ৳2,000.", cta: "Shop Now", href: "/collections/all", c: "from-brand-700 to-brand-500" },
+    { t: "Khejur Gur Season is Here", s: "Fresh date jaggery from Jessore. Limited stock.", cta: "Shop Now", href: "/collections/all", c: "from-amber-600 to-yellow-500" },
+    { t: "Cold-Pressed Oils", s: "Ghani-bhanga mustard oil, traditional taste.", cta: "Shop Now", href: "/collections/all", c: "from-emerald-700 to-green-500" },
+  ];
   const [i, setI] = useState(0);
   const go = (d: number) => setI((p) => (p + d + SLIDES.length) % SLIDES.length);
   useEffect(() => {
@@ -235,7 +234,7 @@ export function Hero() {
                   <div>
                     <h1 className="text-2xl font-extrabold sm:text-4xl">{s.t}</h1>
                     <p className="mt-2 text-sm opacity-90 sm:text-base">{s.s}</p>
-                    <Link href="/collections/all" className="mt-4 inline-block rounded-full bg-white px-6 py-2 text-sm font-bold text-gray-900">Shop Now</Link>
+                    <Link href={(s as any).href ?? "/collections/all"} className="mt-4 inline-block rounded-full bg-white px-6 py-2 text-sm font-bold text-gray-900">{(s as any).cta ?? "Shop Now"}</Link>
                   </div>
                   <div className="hidden text-8xl opacity-30 sm:block">❋</div>
                 </div>
@@ -272,8 +271,8 @@ export function Hero() {
   );
 }
 
-export function Testimonials() {
-  const items = [
+export function Testimonials({ items }: { items?: { name: string; role: string; area: string; text: string }[] }) {
+  const list = items?.length ? items.map((x) => ({ n: x.name, r: x.role, d: x.area, t: x.text })) : [
     { n: "Rahima K.", r: "Housewife", d: "Dhanmondi, Dhaka", t: "মধুটা একদম খাঁটি। বাচ্চারা প্রতিদিন খায়। ডেলিভারিও দ্রুত ছিল।" },
     { n: "Tanvir H.", r: "Service Holder", d: "Uttara, Dhaka", t: "Gur quality is excellent, tastes like childhood. COD made it easy." },
     { n: "Nasrin S.", r: "Housewife", d: "Chattogram", t: "Mustard oil is genuinely cold-pressed. Became a regular customer." },
@@ -282,7 +281,7 @@ export function Testimonials() {
     <section className="mx-auto mt-10 max-w-[1440px] px-4">
       <SectionHead title="Customer Reviews" sub="What our customers say" href="/collections/all" />
       <div className="grid gap-3 sm:grid-cols-3">
-        {items.map((x) => (
+        {list.map((x) => (
           <div key={x.n} className="rounded-xl border bg-white p-4">
             <div className="text-accent-500">★★★★★</div>
             <p className="mt-2 text-sm">{x.t}</p>

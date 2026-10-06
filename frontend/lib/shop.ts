@@ -129,3 +129,33 @@ const byBadge = (all: Product[], b: string) => {
 export const bestSellers = async () => byBadge(await organicAll(), "Best Selling");
 export const newArrivals = async () => byBadge(await organicAll(), "New Arrival");
 export const offers = async () => byBadge(await organicAll(), "Offer");
+
+// ---- CMS settings (public, fallback-safe) ----
+export type HeroSlide = { title: string; subtitle: string; cta: string; href: string; gradient: string; enabled: boolean };
+export type RailConfig = { id: string; title: string; sub: string; source: string; href: string; limit: number; enabled: boolean };
+export type HomepageConfig = {
+  announcement: string;
+  hero: HeroSlide[];
+  featuredCategories: { title: string; sub: string; limit: number; enabled: boolean };
+  rails: RailConfig[];
+  offerBanners: { kicker: string; title: string; cta: string; href: string; gradient: string; enabled: boolean }[];
+  trustBadges: { title: string; sub: string; enabled: boolean }[];
+  testimonials: { name: string; role: string; area: string; text: string; enabled: boolean }[];
+};
+export type StoreConfig = {
+  hotline: string; whatsapp: string; codText: string;
+  freeShipDhakaOver: number; insideDhakaCharge: number; outsideDhakaCharge: number;
+};
+
+async function publicSetting<T>(key: string): Promise<T | null> {
+  try {
+    const r = await fetch(`${API}/settings/${key}`, { next: { revalidate: 60 } });
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+export const getHomepage = () => publicSetting<HomepageConfig>("homepage");
+export const getStoreSetting = () => publicSetting<StoreConfig>("store");

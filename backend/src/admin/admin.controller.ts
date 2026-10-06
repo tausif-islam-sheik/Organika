@@ -19,4 +19,10 @@ export class AdminController {
   series(@Query("days") days?: string) {
     return this.admin.salesSeries(Number(days) || 14);
   }
+
+  @Roles("ADMIN", "MANAGER", "PACKER")
+  @Get("orders-series")
+  ordersSeries(@Query("days") days?: string) {
+    return this.admin.ordersSeries(Number(days) || 14);
+  }
 }

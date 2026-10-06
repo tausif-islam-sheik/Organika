@@ -110,6 +110,7 @@ model Product {
   isActive    Boolean          @default(true)
   createdAt   DateTime         @default(now())
   variants    ProductVariant[]
+  reviews     Review[]
 }
 
 model ProductVariant {
@@ -269,4 +270,38 @@ model Shipment {
   trackingCode  String?
   status        String   @default("CREATED")
   createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  type      String    @default("INFO") // ORDER_NEW | STOCK_LOW | PAYMENT | REVIEW | INFO
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([readAt, createdAt])
+  @@index([type, createdAt])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  rating    Int      @default(5)
+  title     String?
+  body      String
+  photos    String[] @default([])
+  isVisible Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
 }

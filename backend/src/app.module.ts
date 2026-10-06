@@ -10,6 +10,11 @@ import { PaymentsModule } from "./payments/payments.module";
 import { ShippingModule } from "./shipping/shipping.module";
 import { AdminModule } from "./admin/admin.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { SettingsModule } from "./settings/settings.module";
+import { CustomersModule } from "./customers/customers.module";
+import { CouponsModule } from "./coupons/coupons.module";
+import { ReviewsModule } from "./reviews/reviews.module";
 import { JwtAuthGuard } from "./auth/jwt-auth.guard";
 import { Public } from "./auth/decorators";
 
@@ -23,7 +28,7 @@ class HealthController {
 }
 
 @Module({
-  imports: [PrismaModule, AuthModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, ShippingModule, AdminModule, UploadsModule],
+  imports: [PrismaModule, AuthModule, CatalogModule, CartModule, CheckoutModule, OrdersModule, PaymentsModule, ShippingModule, AdminModule, UploadsModule, NotificationsModule, SettingsModule, CustomersModule, CouponsModule, ReviewsModule],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

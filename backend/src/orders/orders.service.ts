@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ConflictException }
 import { randomInt } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { CheckoutService } from "../checkout/checkout.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 const FLOW: Record<string, string[]> = {
   PENDING: ["CONFIRMED", "CANCELLED"],
@@ -17,7 +18,11 @@ const RELEASE = new Set(["CANCELLED", "FAILED", "RETURNED"]);
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService, private checkout: CheckoutService) {}
+  constructor(
+    private prisma: PrismaService,
+    private checkout: CheckoutService,
+    private notes?: NotificationsService,
+  ) {}
 
   async create(
     userId: string | undefined,
@@ -40,7 +45,7 @@ export class OrdersService {
     for (let attempt = 0; attempt < 5; attempt++) {
       const orderNo = `GB-${260000 + randomInt(1, 39999)}`;
       try {
-        return await this.prisma.$transaction(async (tx) => {
+        const order = await this.prisma.$transaction(async (tx) => {
           // Reserve stock atomically
           for (const it of b.items) {
             const r = await tx.productVariant.updateMany({
@@ -81,6 +86,16 @@ export class OrdersService {
           if (q.couponId) await tx.coupon.update({ where: { id: q.couponId }, data: { usedCount: { increment: 1 } } });
           return order;
         });
+        // Fire-and-forget admin alert (never blocks checkout)
+        this.notes?.notifyOrderNew(order).catch(() => {});
+        // Low-stock alerts for variants that dropped to ≤5
+        this.prisma.productVariant
+          .findMany({ where: { id: { in: b.items.map((i) => i.variantId) }, stock: { lte: 5 } }, include: { product: { select: { nameEn: true } } } })
+          .then((lows) => {
+            for (const v of lows) this.notes?.notifyStockLow(v.product.nameEn, v.label, v.stock, v.id);
+          })
+          .catch(() => {});
+        return order;
       } catch (e: any) {
         if (e?.code === "P2002") continue; // orderNo collision → retry
         throw e;
@@ -101,7 +116,7 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!order) throw new NotFoundException("Order not found");
     if (!FLOW[order.status]?.includes(to)) throw new BadRequestException(`${order.status} → ${to} not allowed`);
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       if (RELEASE.has(to)) {
         for (const it of order.items) {
           await tx.productVariant.update({ where: { id: it.variantId }, data: { stock: { increment: it.quantity } } });
@@ -116,6 +131,8 @@ export class OrdersService {
         include: { items: true, history: { orderBy: { createdAt: "asc" } } },
       });
     });
+    this.notes?.notifyStatusChange(updated.orderNo, to).catch(() => {});
+    return updated;
   }
 
   list(status?: string) {
@@ -125,5 +142,16 @@ export class OrdersService {
       take: 100,
       include: { items: true },
     });
+  }
+
+  detail(id: string) {
+    return this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true, history: { orderBy: { createdAt: "asc" } }, shipment: true },
+    });
+  }
+
+  setPayment(id: string, paymentStatus: string) {
+    return this.prisma.order.update({ where: { id }, data: { paymentStatus: paymentStatus as any } });
   }
 }

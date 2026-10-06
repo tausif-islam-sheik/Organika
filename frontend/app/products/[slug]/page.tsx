@@ -81,7 +81,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         </div>
 
         <div className="flex flex-col justify-center gap-5 py-4">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
             {p.badges.map((b) => <Badge key={b} label={b} />)}
             {off > 0 && <DiscountBadge text={`Save ${off}%`} />}
           </div>

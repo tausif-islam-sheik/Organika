@@ -15,8 +15,20 @@ export class AdminOrdersController {
   }
 
   @Roles("ADMIN", "MANAGER", "PACKER")
+  @Get(":id")
+  detail(@Param("id") id: string) {
+    return this.orders.detail(id);
+  }
+
+  @Roles("ADMIN", "MANAGER", "PACKER")
   @Patch(":id/status")
   transition(@Param("id") id: string, @Body() b: { to: string; note?: string; by?: string }) {
     return this.orders.transition(id, b.to, b.by, b.note);
+  }
+
+  @Roles("ADMIN", "MANAGER")
+  @Patch(":id/payment")
+  payment(@Param("id") id: string, @Body() b: { status: string }) {
+    return this.orders.setPayment(id, b.status);
   }
 }

@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { ShoppingCart, PackageSearch, User, Home, LayoutGrid, ShoppingBag, CircleUserRound, Search, Phone, MessageCircle, Banknote, CreditCard, MapPin } from "lucide-react";
 import { useCart } from "./cart";
 import { imgUrl } from "./home";
+import { SearchBar } from "./search-bar";
 import { DEMO_CATEGORIES } from "../lib/shop";
 import { formatBDT } from "../lib/shop";
 
-export function Header({ cats }: { cats: { name: string; slug: string }[] }) {
+export function Header({ cats, announcement, hotline }: { cats: { name: string; slug: string }[]; announcement?: string; hotline?: string }) {
   const { count, setOpen } = useCart();
-  const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const liveSlugs = new Set(cats.map((c) => c.slug));
   const full = [
@@ -22,24 +22,17 @@ export function Header({ cats }: { cats: { name: string; slug: string }[] }) {
     <header className="sticky top-0 z-40 bg-white shadow-sm">
       <div className="bg-brand-700 text-white text-xs">
         <div className="mx-auto max-w-[1440px] px-4 py-1.5 flex justify-between">
-          <span>Cash on Delivery available all over Bangladesh</span>
-          <span className="hidden sm:inline">Hotline: 09611-XXXXXX</span>
+          <span>{announcement ?? "Cash on Delivery available all over Bangladesh"}</span>
+          <span className="hidden sm:inline">Hotline: {hotline ?? "09611-XXXXXX"}</span>
         </div>
       </div>
       <div className="mx-auto flex max-w-[1440px] items-center gap-3 px-4 py-3 md:grid md:grid-cols-[1fr_minmax(0,36rem)_1fr]">
         <Link href="/" className="justify-self-start text-3xl font-extrabold text-brand-700">
           Organika<span className="text-accent-500">.</span>
         </Link>
-        <form action="/search" className="hidden w-full md:flex">
-          <input
-            name="q"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search honey, gur, oil…"
-            className="w-full rounded-l-full border border-r-0 px-4 py-2 text-sm outline-none focus:border-brand-500"
-          />
-          <button className="shrink-0 rounded-r-full bg-brand-600 px-5 text-sm font-semibold text-white">Search</button>
-        </form>
+        <div className="hidden w-full md:flex">
+          <SearchBar id="site-search-desktop" />
+        </div>
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:justify-self-end">
           <button
             onClick={() => setSearchOpen((v) => !v)}
@@ -65,17 +58,9 @@ export function Header({ cats }: { cats: { name: string; slug: string }[] }) {
         </div>
       </div>
       {searchOpen && (
-      <form action="/search" className="px-4 pb-2 md:hidden">
-        <div className="flex">
-          <input
-            name="q"
-            autoFocus
-            placeholder="Search honey, gur, oil…"
-            className="w-full rounded-l-full border border-r-0 px-4 py-2 text-sm outline-none focus:border-brand-500"
-          />
-          <button className="shrink-0 rounded-r-full bg-brand-600 px-5 text-sm font-semibold text-white">Search</button>
-        </div>
-      </form>
+      <div className="px-4 pb-2 md:hidden">
+        <SearchBar id="site-search-mobile" autoFocus onNavigate={() => setSearchOpen(false)} />
+      </div>
       )}
       <nav className="bg-brand-600 text-white">
         <div className="no-scrollbar mx-auto flex max-w-[1440px] gap-1 overflow-x-auto px-4">
@@ -91,7 +76,7 @@ export function Header({ cats }: { cats: { name: string; slug: string }[] }) {
   );
 }
 
-export function Footer({ cats = [] }: { cats?: { name: string; slug: string }[] }) {
+export function Footer({ cats = [], hotline, whatsapp }: { cats?: { name: string; slug: string }[]; hotline?: string; whatsapp?: string }) {
   const shop = cats.length ? cats.slice(0, 5) : [
     { name: "Honey", slug: "honey" },
     { name: "Oils", slug: "oils" },
@@ -158,8 +143,8 @@ export function Footer({ cats = [] }: { cats?: { name: string; slug: string }[] 
             <span className="mt-1.5 block h-0.5 w-8 rounded-full bg-accent-500" />
           </div>
           <ul className="mt-3 space-y-2.5 text-sm opacity-80">
-            <li className="flex items-center gap-2.5"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15"><Phone className="size-3.5" /></span> Hotline: 09611-XXXXXX</li>
-            <li className="flex items-center gap-2.5"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-3.5" /></span> WhatsApp: 01XXXXXXXXX</li>
+            <li className="flex items-center gap-2.5"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15"><Phone className="size-3.5" /></span> Hotline: {hotline ?? "09611-XXXXXX"}</li>
+            <li className="flex items-center gap-2.5"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-3.5" /></span> WhatsApp: {whatsapp ?? "01XXXXXXXXX"}</li>
             <li className="flex items-center gap-2.5"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15"><MapPin className="size-3.5" /></span> Dhaka, Bangladesh</li>
           </ul>
           <div className="mt-4 flex items-center gap-1.5">

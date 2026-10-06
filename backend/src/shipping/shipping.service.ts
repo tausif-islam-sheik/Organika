@@ -37,8 +37,7 @@ export class ShippingService {
     });
   }
 
-  async webhook(consignmentId: string, status: string) {
-    const ship = await this.prisma.shipment.findUnique({ where: { consignmentId }, include: { order: true } });
+  async webhook(consignmentId: string, status: string) {    const ship = await this.prisma.shipment.findUnique({ where: { consignmentId }, include: { order: true } });
     if (!ship) throw new NotFoundException("Unknown consignment");
     const to = WEBHOOK_TO_ORDER[status.toLowerCase()];
     await this.prisma.shipment.update({ where: { id: ship.id }, data: { status: status.toUpperCase() } });
@@ -52,5 +51,34 @@ export class ShippingService {
       }
     }
     return { ok: true };
+  }
+
+  zones() {
+    return this.prisma.deliveryZone.findMany({ orderBy: { sortOrder: "asc" } });
+  }
+
+  createZone(d: any) {
+    return this.prisma.deliveryZone.create({
+      data: {
+        name: d.name,
+        charge: Number(d.charge ?? 0),
+        freeOver: d.freeOver ? Number(d.freeOver) : null,
+        sortOrder: Number(d.sortOrder ?? 0),
+        isActive: d.isActive ?? true,
+      },
+    });
+  }
+
+  updateZone(id: string, d: any) {
+    const { id: _drop, ...rest } = d ?? {};
+    const data: any = { ...rest };
+    if (data.charge !== undefined) data.charge = Number(data.charge);
+    if (data.freeOver !== undefined) data.freeOver = data.freeOver ? Number(data.freeOver) : null;
+    if (data.sortOrder !== undefined) data.sortOrder = Number(data.sortOrder);
+    return this.prisma.deliveryZone.update({ where: { id }, data });
+  }
+
+  deleteZone(id: string) {
+    return this.prisma.deliveryZone.delete({ where: { id } });
   }
 }
